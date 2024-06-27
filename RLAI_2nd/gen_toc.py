@@ -1,3 +1,4 @@
+import re
 import nbformat
 import sys
 import argparse
@@ -60,11 +61,23 @@ def generate_toc_for_notebook(notebook_path, cmt_toc=True):
             new_lines = []
             for line in lines:
                 if not line.startswith("#"):
-                    new_lines.append(line)
+                    if not (
+                        line.strip().startswith("<a id=")
+                        and line.strip().startswith("</a>")
+                    ):
+                        new_lines.append(line)
                     continue
 
                 level = line.count("#")
-                title = line.strip("# ").strip()
+                title = line.strip("# ").strip().split("\n")[0]
+                anchor_pos = re.search('<a id=".*"></a>', title)
+                if anchor_pos:
+                    title = re.findall(
+                        r"^[0-9\.\s]*([^0-9]{1}.*)", title[: anchor_pos.start()]
+                    )[0].strip()
+                else:
+                    title = re.findall(r"^[0-9\.\s]*([^0-9]{1}.*)", title)[0].strip()
+
                 # Reset lower level counts when a higher level heading is encountered
                 for l in range(level + 1, 7):
                     heading_counts[l] = 0
@@ -73,14 +86,14 @@ def generate_toc_for_notebook(notebook_path, cmt_toc=True):
                 numbering = (
                     ".".join(str(heading_counts[l]) for l in range(1, level + 1)) + "."
                 )
-                anchor = title.lower().replace(" ", "-")
+                anchor = numbering + "-" + title.lower().replace(" ", "-")
                 toc.append(
                     f'<li style="margin-left: {20 * (level - 1)}px;"><a href="#{anchor}">{numbering} {title}</a></li>'
                 )
 
                 # Add an anchor tag to the headline title
                 new_lines.append(
-                    '{} {} {}<a id="{}"></a>'.format(
+                    '{} {} {}\n<a id="{}"></a>'.format(
                         "#" * level, numbering, title, anchor
                     )
                 )
