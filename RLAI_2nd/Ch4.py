@@ -1,38 +1,12 @@
-# %% [markdown]
-# <h1>Table of Contents<span class="tocSkip"></span></h1><ul>
-# <li style="margin-left: 0px;"><a href="#1.-import-dep">1. Import dep</a></li>
-# <li style="margin-left: 0px;"><a href="#2.-example-4.1">2. Example 4.1</a></li>
-# <li style="margin-left: 20px;"><a href="#2.1.-ex-4.1">2.1. Ex 4.1</a></li>
-# <li style="margin-left: 20px;"><a href="#2.2.-ex-4.2">2.2. Ex 4.2</a></li>
-# <li style="margin-left: 20px;"><a href="#2.3.-ex-4.4">2.3. Ex 4.4</a></li>
-# <li style="margin-left: 0px;"><a href="#3.-ex-4.5">3. Ex 4.5</a></li>
-# <li style="margin-left: 0px;"><a href="#4.-ex-4.7">4. Ex 4.7</a></li>
-# <li style="margin-left: 20px;"><a href="#4.1.-replicate-fig.-4.2">4.1. Replicate Fig. 4.2</a></li>
-# <li style="margin-left: 40px;"><a href="#4.1.1.-one-step-of-policy-evaluation">4.1.1. One step of policy evaluation</a></li>
-# <li style="margin-left: 40px;"><a href="#4.1.2.-policy-evaluation">4.1.2. Policy evaluation</a></li>
-# <li style="margin-left: 40px;"><a href="#4.1.3.-policy-improvement">4.1.3. Policy improvement</a></li>
-# <li style="margin-left: 40px;"><a href="#4.1.4.-run-the-policy-iteration">4.1.4. Run the policy iteration</a></li>
-# <li style="margin-left: 20px;"><a href="#4.2.-value-iteration-as-a-comparison">4.2. Value iteration as a comparison</a></li>
-# <li style="margin-left: 20px;"><a href="#4.3.-add-more-details">4.3. Add more details</a></li>
-# <li style="margin-left: 0px;"><a href="#5.-example-4.8">5. Example 4.8</a></li>
-# <li style="margin-left: 20px;"><a href="#5.1.-ex-4.9">5.1. Ex 4.9</a></li>
-# <li style="margin-left: 20px;"><a href="#5.2.-optimal-sol-in-the-book">5.2. Optimal sol in the book</a></li>
-# <li style="margin-left: 0px;"><a href="#6.-ex-4.10">6. Ex 4.10</a></li>
-# <li style="margin-left: 0px;"><a href="#7.-end">7. End</a></li>
-# </ul>
-
-# %%
 from IPython.display import display, HTML
 
 # Set the notebook width to 80%
 display(HTML("<style>.container { width: 80% !important; }</style>"))
 
-# %%
 !jupyter notebook list
 
-# %%
 # Needs to paste `http://localhost:3110`, no ending `/`
-port = 2810
+port = 2900
 
 import IPython
 import json
@@ -60,18 +34,12 @@ nbs = response.json()
 nb_names = [nb['name'] for nb in nbs]
 print(len(nb_names), nb_names)
 
-# %% [markdown]
-# # 1. Import dep
-# <a id="1.-import-dep"></a>
-
-# %%
 from itertools import product
 
 import numpy as np
 import matplotlib.pyplot as plt
 %matplotlib notebook
 
-# %%
 import plotly
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
@@ -79,18 +47,11 @@ import plotly.io as pio
 
 pio.renderers.default = "notebook"
 
-# %%
 COLOR_LIST = plotly.colors.DEFAULT_PLOTLY_COLORS
 len(COLOR_LIST)
 
-# %%
 print(plotly.__version__, plotly.__path__)
 
-# %% [markdown]
-# # 2. Example 4.1
-# <a id="2.-example-4.1"></a>
-
-# %%
 def state_val_update1(vnn, ga):
     nr, nc = vnn.shape
     # Using the vnn values below to use the newly obtained v_{n+1} values.
@@ -158,11 +119,6 @@ def pr_val_func(val: np.ndarray, fmt='%8.3f', reshape=False, nr=None, nc=None):
         print(np.array2string(val, formatter={'float_kind':lambda x: fmt % x}))
         
 
-# %% [markdown]
-# ## 2.1. Ex 4.1
-# <a id="2.1.-ex-4.1"></a>
-
-# %%
 v0 = np.zeros((4, 4))
 ga = 1.0
 max_iter = 1000
@@ -170,16 +126,10 @@ memo_step = 10
 memo_v = eval_schema2(state_val_update1, v0, ga, max_iter, memo_step, plt_trace=True, trace_ij=(1, 3))
 pr_val_func(memo_v[max_iter])
 
-# %%
 q_11_down = -1+memo_v[max_iter][3, 3]
 q_7_down = -1+memo_v[max_iter][2, 3]
 q_11_down, q_7_down
 
-# %% [markdown]
-# ## 2.2. Ex 4.2
-# <a id="2.2.-ex-4.2"></a>
-
-# %%
 def state_val_update2(vnn, ga):
     def _ij(i, j):
         return i*4+j
@@ -208,7 +158,6 @@ def state_val_update2(vnn, ga):
                 vnn[_ij(i, j)] = -1+sum([ga*vnn[_ij(i, j-1)], ga*vnn[_ij(i, j+1)], ga*vnn[_ij(i-1, j)], ga*vnn[_ij(i+1, j)]])/4
     vnn[-1] = -1+sum([ga*vnn[_ij(3, 0)], ga*vnn[_ij(3, 1)], ga*vnn[_ij(3, 2)], ga*vnn[-1]])/4
 
-# %%
 v0 = np.zeros((17,))
 ga = 1.0
 max_iter = 1000
@@ -217,35 +166,6 @@ memo_v = eval_schema2(state_val_update2, v0, ga, max_iter, memo_step, plt_trace=
 pr_val_func(memo_v[max_iter][:16], reshape=True, nr=-1, nc=4)
 memo_v[max_iter][-1]
 
-# %% [markdown]
-# ## 2.3. Ex 4.4
-# <a id="2.3.-ex-4.4"></a>
-# - The bug is that the optimal policy is not unique. So even though the policy improvement shows that the `policy-stable=false`, the algorithm may not give a better state-value function in the next policy evaluation. Actually, the algorithm can circulating between different optimal policies. (In other words, ties should be broken in a consistent order.)
-#     - One way to fix it is that in policy improvement, we don't use the current way to assign $\pi(s)$. Instead, we check if there is an action giving a better value of existing $p(s, a)$. If so, we assign the action to the $\pi(s)$ and assign `policy-stable=false`, otherwise we don't do anything for the current $\pi(s)$.
-#     - Another way of fixing is that, within policy evaluation, we can also check if the current state-value function is close to the state-value function in the last time policy evaluation. If there is a strict improvement in 
-
-# %% [markdown]
-# # 3. Ex 4.5
-# <a id="3.-ex-4.5"></a>
-# 
-# \begin{align*}
-# q_{\pi}(s, a) &= \mathbb{E}[R_{t+1}+\gamma*v_{\pi}(S_{t+1})|s, a] \\
-# &= \mathbb{E}[R_{t+1}+\gamma*\sum_{a}\pi(a|S_{t+1})q_{\pi}(S_{t+1}, a)|s, a] \\
-# &= \sum_{s', r}p(s',r|s,a)(r+\gamma*\sum_{a}\pi(a|s')q_{\pi}(s', a))
-# \end{align*}
-# 
-# At each time step $k$, we have $q_k(s,a)$. Then, we can use this $q_k(s,a)$ to evaluate $q_{k+1}(s,a)$ using the equation above. This is policy evaluation for the action-value function.
-
-# %% [markdown]
-# # 4. Ex 4.7
-# <a id="4.-ex-4.7"></a>
-
-# %% [markdown]
-# ## 4.1. Replicate Fig. 4.2
-# <a id="4.1.-replicate-fig.-4.2"></a>
-# - The solution is the same with Fig. 4.2.
-
-# %%
 from itertools import product
 import math
 import time
@@ -271,22 +191,6 @@ POISSON_CACHE_RET2 = [np.exp(-RET2)*RET2**ret2/math.factorial(ret2) for ret2 in 
 POISSON_CACHE_CUMU_RET2 = np.cumsum(POISSON_CACHE_RET2)
 
 
-# %% [markdown]
-# ### 4.1.1. One step of policy evaluation
-# <a id="4.1.1.-one-step-of-policy-evaluation"></a>
-# - Transition prob and average rewards from $s$ to $s'$
-# 
-# \begin{align*}
-# & \sum_{r}p(s', r|s, \pi(s))[r+\gamma V(s')] \\ 
-# = & \sum_{r}p(s', r|s, \pi(s))r + \gamma V(s')\sum_{r}p(s', r|s, \pi(s)) \\
-# = & \left[r(s,\pi(s),s') + \gamma V(s')\right]p(s'|s,\pi(s))
-# \end{align*}
-# 
-# - In this problem, the two car rental locations can be decoupled from each other, once the number of cars moved overnight is taken into account. This largely reduces the computational complexity. Naively implementing the transition probability function would make the program too slow.
-# 
-# - The computation complexity of one transition probability calculation is $\mu_T = O(N)$, where $N$ is the maximum number of car one location is allowed.
-
-# %%
 # # The following is a naive implementation of the car rental problem, which is very slow.
 # def car_rental_trans(c1, c2, mv, c1n, c2n):
 #     """
@@ -377,23 +281,6 @@ def car_rental_trans1(c1, c2, mv, c1n, c2n):
     return r_sa_sp, p_sa_sp
 
 
-# %% [markdown]
-# ### 4.1.2. Policy evaluation
-# <a id="4.1.2.-policy-evaluation"></a>
-# - Loop over all the state $s$
-# 
-# \begin{align*}
-# V_{k+1}(s) \leftarrow & \sum_{s'}\left[r(s,\pi(s),s') + \gamma V_k(s')\right]p(s'|s,\pi(s)) \\
-# = & r(s, \pi(s)) + \gamma \sum_{s'} p(s'|s,\pi(s)) V_k(s')
-# \end{align*}
-# 
-# - Then loop over $k$ until the $max_{s}|V_{k+1}(s)-V_{k}(s)|$ is smaller than a tolerance.
-# 
-# - Parallizing each state in the policy evaluation instead of within the evaluation of each state makes the policy evaluation loop much faster. This way program finishes in a reasonable time.
-# 
-# - The computation complexity of one iteration from $k$ to $k+1$ is $|\mathcal{S}|^2*\mu_T$, where $|\mathcal{S}| = O(N^2)$.
-
-# %%
 def car_rental_pol_eval(
     car_rental_trans_func: callable,
     arr_pol: np.ndarray, arr_val: np.ndarray, ga: float, pol_iter: int,
@@ -465,21 +352,6 @@ def car_rental_pol_eval(
     return arr_valn
 
 
-# %% [markdown]
-# ### 4.1.3. Policy improvement
-# <a id="4.1.3.-policy-improvement"></a>
-# - Loop over all the state $s$
-# 
-# \begin{align*}
-# \pi(s) \leftarrow & \argmax_{a} q_{\pi}(s, a) \\
-# = & \argmax_{a} \sum_{s', r}p(s', r|s, a)[r+\gamma V_{\pi}(s')]
-# \end{align*}
-# 
-# - Check if the policy changed or not. If not changed, stop. Otherwise, go to Policy Evaluation.
-# 
-# - The computation complexity of this step is $|\mathcal{S}|^2*|\mathcal{A}|*\mu_{T}$, where $\mu_{T}$ is the computation complexity of one transition probability calculation.
-
-# %%
 def eval_act_val(car_rental_trans_func, arr_val, i, j, mv, ga):
     nr, nc = arr_val.shape
     q_sa = 0
@@ -534,12 +406,6 @@ def car_rental_pol_impr(car_rental_trans_func: callable, arr_pol: np.ndarray, ar
     return pol_stab, arr_poln
 
 
-# %% [markdown]
-# ### 4.1.4. Run the policy iteration
-# <a id="4.1.4.-run-the-policy-iteration"></a>
-# - The total computation complexity is $n_{poli\_impr}*(n_{poli\_eval}+|\mathcal{A}|)*|\mathcal{S}|^2*\mu_T$.
-
-# %%
 # def plot_arr_pol(arr_pol):
 #     fig = go.Figure(
 #         data=go.Heatmap(
@@ -659,31 +525,20 @@ def car_rental_pol_iter(car_rental_trans_func, ga, max_pol_iter=-1, plt_iter=Fal
     
     return arr_pol, arr_val
 
-# %%
 # arr_val = np.zeros((MAX_CARS+1, MAX_CARS+1), dtype=float)
 # for i, j in product(range(MAX_CARS+1), range(MAX_CARS+1)):
 #     arr_val[i, j] = min(i, ARR1)+min(j, ARR2)
 # arr_val *= RENT_RWD/(1-0.9)
 # plot_arr_val(arr_val)
 
-# %%
 %%time
 pol_eval_kwargs = {'tol': 1e-3, 'max_iter': 1000, 'memo_step': 10, 'plt_trace': True, 'trace_ij': (10, 10)}
 _ = car_rental_pol_iter(car_rental_trans1, 0.9, max_pol_iter=5, plt_iter=True, **pol_eval_kwargs)
 
-# %% [markdown]
-# ## 4.2. Value iteration as a comparison
-# <a id="4.2.-value-iteration-as-a-comparison"></a>
-# - The value iteration is much faster than policy iteration, b/c it does a little more policy improvements but does far fewer policy evaluations.
-# - Even though the final state-value function does not equal to the optimal one, the final policy is the optimal.
-# - Actually the final policy is not the optimal, probably b/c the value function is not consistent. But the policy is very close the optimal one. If we run policy iteration after the value iteration, it converges to the optimal one within two iteration, each with very few iterations of policy evaluation.
-
-# %%
 %%time
 pol_eval_kwargs = {'tol': 1e-3, 'max_iter': 1, 'memo_step': 10, 'plt_trace': True, 'trace_ij': (10, 10)}
 arr_pol_val_iter, arr_val_val_iter = car_rental_pol_iter(car_rental_trans1, 0.9, max_pol_iter=100, plt_iter=True, **pol_eval_kwargs)
 
-# %%
 %%time
 pol_eval_kwargs = {'tol': 1e-3, 'max_iter': 1000, 'memo_step': 10, 'plt_trace': True, 'trace_ij': (10, 10)}
 arr_pol_val_iter, arr_val_val_iter = car_rental_pol_iter(
@@ -692,14 +547,8 @@ arr_pol_val_iter, arr_val_val_iter = car_rental_pol_iter(
     **pol_eval_kwargs
 )
 
-# %%
 
 
-# %% [markdown]
-# ## 4.3. Add more details
-# <a id="4.3.-add-more-details"></a>
-
-# %%
 PARKING_THRE = 10
 EXTRA_PARKING_COST = 4
 
@@ -727,17 +576,10 @@ def car_rental_trans2(c1, c2, mv, c1n, c2n):
     r_sa_sp = r_sa_sp1*p_sa_sp2+r_sa_sp2*p_sa_sp1-cost*p_sa_sp
     return r_sa_sp, p_sa_sp
 
-# %%
 %%time
 pol_eval_kwargs = {'tol': 1e-3, 'max_iter': 1000, 'memo_step': 10, 'plt_trace': True, 'trace_ij': (10, 10)}
 _ = car_rental_pol_iter(car_rental_trans2, 0.9, max_pol_iter=5, plt_iter=True, **pol_eval_kwargs)
 
-# %% [markdown]
-# # 5. Example 4.8
-# <a id="5.-example-4.8"></a>
-# - All solutions are close to each others.
-
-# %%
 import time
 
 import matplotlib.cm as cm
@@ -749,11 +591,6 @@ def gen_plotly_rgba(arr_rgba):
     arr_rgb_rd = np.round(arr_rgba[:3]*255).astype(int)
     return f'rgba({arr_rgb_rd[0]}, {arr_rgb_rd[1]}, {arr_rgb_rd[2]}, {arr_rgba[3]})'
 
-# %% [markdown]
-# ## 5.1. Ex 4.9
-# <a id="5.1.-ex-4.9"></a>
-
-# %%
 def gambler_val_iter(arr_val, ph, tol=1e-4, inplace=False, plt=False, c_iters=None):
     n = len(arr_val)
     goal = n - 1
@@ -862,7 +699,6 @@ def gambler_val_iter_1(arr_val, ph, tol=1e-4, c_iters=None):
     return arr_act, arr_valn
     
 
-# %%
 goal = 100
 arr_val_ini = np.zeros(goal+1)
 arr_val_ini[-1] = 1
@@ -870,21 +706,13 @@ ph, tol = .4, 1e-7
 c_iters = [1, 2, 3, 5, 10, 20, 99, 100, 101]
 arr_act_1, arr_val_1 = gambler_val_iter(arr_val_ini, ph, tol, plt=True, c_iters=c_iters)
 
-# %%
 arr_act_2, arr_val_2 = gambler_val_iter(arr_val_ini, ph, tol=1e-12, inplace=True, plt=True, c_iters=c_iters)
 
-# %%
 arr_act_3, arr_val_3 = gambler_val_iter_1(arr_val_ini, ph, tol=1e-8, c_iters=c_iters)
 
-# %% [markdown]
-# ## 5.2. Optimal sol in the book
-# <a id="5.2.-optimal-sol-in-the-book"></a>
-
-# %%
 ini_arr = np.arange(1, 13)
 ini_arr
 
-# %%
 def mirror_arr(arr, last_val=None):
     if last_val is None:
         return np.concatenate((arr, arr[::-1]))
@@ -901,7 +729,6 @@ def plt_arr(arr, max_x, max_y, si=1):
     )
     fig.show()
 
-# %%
 max_x, max_y = 100, 55
 arr1 = mirror_arr(ini_arr, None)
 print(f"len(arr1): {len(arr1)}")
@@ -912,7 +739,6 @@ print(f"len(arr3): {len(arr3)}")
 arr3 = np.concatenate(([0], arr3, [0]))
 plt_arr(arr3, max_x, max_y, si=0)
 
-# %%
 OPT_ARR_ACT = arr3
 
 def gambler_pol_eval(arr_val, ph, tol=1e-4, inplace=False, plt=False, c_iters=None):
@@ -973,7 +799,6 @@ def gambler_pol_eval(arr_val, ph, tol=1e-4, inplace=False, plt=False, c_iters=No
     
     return arr_act, arr_valn
 
-# %%
 goal = 100
 arr_val_ini = np.zeros(goal+1)
 arr_val_ini[-1] = 1
@@ -981,29 +806,10 @@ ph, tol = .4, 1e-9
 c_iters = [1, 2, 3, 5, 10, 20, 30, 99, 100, 101]
 arr_act, arr_val = gambler_pol_eval(arr_val_ini, ph, tol, plt=True, c_iters=c_iters)
 
-# %%
 (np.max(np.abs(arr_val_1-arr_val_2)), np.max(np.abs(arr_val_1-arr_val_3)), np.max(np.abs(arr_val_2-arr_val_3)))
 
-# %% [markdown]
-# # 6. Ex 4.10
-# <a id="6.-ex-4.10"></a>
-# 
-# \begin{align*}
-# q_{k+1}(s, a) = & \mathbb{E}\left[ \left. R_{t+1}+\gamma \max_{a'} q_{k}(S_{t+1}, a') \right| S_t=s, A_t=a \right] \\
-# = & \sum_{s', r}p(s',r | s, a)\left[ r+\gamma \max_{a'} q_{k}(s', a') \right]
-# \end{align*}
-
-# %%
 
 
-# %% [markdown]
-# # 7. End
-# <a id="7.-end"></a>
-
-# %%
-
-
-# %%
 
 
 

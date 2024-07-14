@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[13]:
+# In[1]:
 
 
 from IPython.display import display, HTML
@@ -20,7 +20,7 @@ get_ipython().system('jupyter notebook list')
 
 
 # Needs to paste `http://localhost:3110`, no ending `/`
-port = 2770
+port = 2831
 
 import IPython
 import json
@@ -54,6 +54,14 @@ print(len(nb_names), nb_names)
 # In[4]:
 
 
+import logging
+
+LOGGING_FORMAT = "%(asctime)s|(%(pathname)s)[%(lineno)d]: %(message)s"
+
+logging.basicConfig(format=LOGGING_FORMAT)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 from itertools import product
 import math
 import time
@@ -82,7 +90,7 @@ COLOR_LIST = plotly.colors.DEFAULT_PLOTLY_COLORS
 len(COLOR_LIST)
 
 
-# # Example 5.1: Blackjack
+# # Example 5.1: Blackjack fixed policy
 # - Episodic Monte Carlo for policy evaluation.
 # - Evaluate a fixed policy from the dealer and player.
 
@@ -164,10 +172,22 @@ len(COLOR_LIST)
     
 
 
-# In[27]:
+# In[8]:
 
 
 N_JOBS = 20
+ALPHA = 0.8
+CUST_JET = [
+    [0.0, f'rgba(0, 0, 131, {ALPHA})'],    # Dark blue, more transparent
+    [0.11, f'rgba(0, 60, 170, {ALPHA})'],  # Blue
+    [0.22, f'rgba(5, 255, 255, {ALPHA})'], # Cyan
+    [0.33, f'rgba(255, 255, 0, {ALPHA})'], # Yellow
+    [0.44, f'rgba(250, 0, 0, {ALPHA})'],   # Red
+    [0.55, f'rgba(128, 0, 0, {ALPHA})'],   # Dark red
+    [1.0, f'rgba(128, 0, 0, {ALPHA})']     # Dark red, same as above to end
+]
+# COLORSCALE = CUST_JET
+COLORSCALE = "Jet"
 
 def organize_state_val(state_val_pair):
     
@@ -179,8 +199,8 @@ def organize_state_val(state_val_pair):
     state_val = {}
     for i in range(1, 11):
         for j in range(12, 22):
-            state_val[i, j, 1] = (0, 0)         
-            state_val[i, j, 0] = (0, 0)
+            state_val[i, j, 1] = (0, 0) # usable ace
+            state_val[i, j, 0] = (0, 0) # no usable ace
     
     for state, val in state_val_pair:
         _update_state_val(state, val)
@@ -204,10 +224,10 @@ def Monte_Carlo_sim_blackjack_1(n_ep, dealer_thre=17, player_thre=20, n_jobs=1, 
     card_suit = range(1, 1+n_suit)
     
     def _ini_card_val(card):
-        return min(card, 10)+10*(card==1)
+        return int(min(card, 10)+10*(card==1))
     
     def _card_val(card):
-        return min(card, 10)
+        return int(min(card, 10))
     
     def _hits_or_sticks_round(player_cards, stick_thre):
         # Initial dealing
@@ -253,7 +273,7 @@ def Monte_Carlo_sim_blackjack_1(n_ep, dealer_thre=17, player_thre=20, n_jobs=1, 
             reward = -1
         else:
             dealer_sum = _ini_card_val(dealer_show)
-            had_ace = d_usable_ace = dealer_show==1
+            had_ace = d_usable_ace = int(dealer_show==1)
             while dealer_sum<dealer_thre:
                 new_card = np.random.choice(card_suit, 1)[0]
                 if had_ace:
@@ -288,10 +308,10 @@ def Monte_Carlo_sim_blackjack_2(n_ep, dealer_thre=17, player_thre=20, n_jobs=1, 
     card_suit = range(1, 1+n_suit)
     
     def _ini_card_val(card):
-        return min(card, 10)+10*(card==1)
+        return int(min(card, 10)+10*(card==1))
     
     def _card_val(card):
-        return min(card, 10)
+        return int(min(card, 10))
     
     def _hits_or_sticks_round(state, stick_thre):
         _, player_sum, usable_ace = state
@@ -319,7 +339,7 @@ def Monte_Carlo_sim_blackjack_2(n_ep, dealer_thre=17, player_thre=20, n_jobs=1, 
             reward = -1
         else:
             dealer_sum = _ini_card_val(dealer_show)
-            had_ace = d_usable_ace = dealer_show==1
+            had_ace = d_usable_ace = int(dealer_show==1)
             while dealer_sum<dealer_thre:
                 new_card = np.random.choice(card_suit, 1)[0]
                 if had_ace:
@@ -347,69 +367,182 @@ def Monte_Carlo_sim_blackjack_2(n_ep, dealer_thre=17, player_thre=20, n_jobs=1, 
                 
     return organize_state_val(res)
 
-def plot_arr_bj_state_val(state_val_res, postfix):
+
+def add_axex_gridline(fig, x_vals, y_vals, ls_rc):
+    for ri, ci in ls_rc:
+        # Manually add gridlines at half-tick positions for x-axis
+        for x in x_vals:
+            fig.add_shape(
+                type="line", x0=x, y0=min(y_vals), x1=x, y1=max(y_vals),
+                line=dict(color="Grey", width=1, dash="dot"),
+                row=ri, col=ci
+            )
+
+        # Manually add gridlines at half-tick positions for y-axis
+        for y in y_vals:
+            fig.add_shape(
+                type="line", x0=min(x_vals), y0=y, x1=max(x_vals), y1=y,
+                line=dict(color="Grey", width=1, dash="dot"),
+                row=ri, col=ci
+            )
+
+def plot_state_policy(state_policy, postfix, colorscale=COLORSCALE):
+    plot_val_over_state_space("Policy", state_policy, postfix, colorscale=colorscale)
+
+def plot_val_over_state_space(title, val_over_state_space, postfix, zlim=None, colorscale=COLORSCALE):
+    fig = make_subplots(rows=1, cols=2, horizontal_spacing=0.2, subplot_titles=('No Ace', 'With Ace'))
+    if zlim is not None:
+        zmin, zmax = zlim
+    else:
+        zmin, zmax = min(np.min(vals) for vals in val_over_state_space), max(np.max(vals) for vals in val_over_state_space)
+    fig.add_trace(
+        go.Heatmap(
+            z=val_over_state_space[0].T,
+            colorscale=colorscale,
+            x=[i for i in range(1, 11)],
+            y=[j for j in range(12, 22)],
+            hoverongaps=False,
+            zmin=zmin,
+            zmax=zmax,
+            colorbar=dict(title=title, x=0.42)  # Adjust x to position the color bar between subplots
+        ), row=1, col=1
+    )
+    fig.add_trace(
+        go.Heatmap(
+            z=val_over_state_space[1].T,
+            colorscale=colorscale,
+            x=[i for i in range(1, 11)],
+            y=[j for j in range(12, 22)],
+            hoverongaps=False,
+            zmin=zmin,
+            zmax=zmax,
+            colorbar=dict(title=title, x=1.02)  # Adjust x to position the color bar between subplots
+        ), row=1, col=2
+    )
+    
+    xaxis_kwargs = dict(
+        title='x: Dealer showing', 
+        tickvals=np.arange(1, 11),
+        ticktext=[str(i) for i in range(1, 11)],
+        showgrid=False
+        # showgrid=True, gridwidth=1, gridcolor='grey', layer='above traces'
+    )
+    yaxis_kwargs = dict(
+        title='y: Player sum', 
+        tickvals=np.arange(12, 22),
+        ticktext=[str(i) for i in range(12, 22)],
+        showgrid=False
+        # showgrid=True, gridwidth=1, gridcolor='grey', layer='above traces'
+    )
+    
+    fig.update_layout(
+        title=f'State {title} Heatmaps {postfix}',
+        xaxis=xaxis_kwargs,
+        yaxis=yaxis_kwargs,
+        xaxis2=xaxis_kwargs,
+        yaxis2=yaxis_kwargs,
+        autosize=False,
+        width=1000,
+        height=500,
+    )
+    
+    gl_x_vals = np.arange(0.5, 11, 1)
+    gl_y_vals = np.arange(11.5, 22, 1)
+    add_axex_gridline(fig, gl_x_vals, gl_y_vals, [(1, 1), (1, 2)])
+
+    # add_axex_gridline(fig, np.arange(1, 11), np.arange(12, 22))
+
+    fig.show()
+
+def plot_arr_bj_state_val(state_val_res, postfix, max_cnt=None, colorscale=COLORSCALE):
     state_val_0, state_val_1, state_val_cnt_0, state_val_cnt_1 = state_val_res
-    fig = make_subplots(rows=2, cols=2, horizontal_spacing=0.2, subplot_titles=('No Ace', 'With Ace', 'Count No Ace', 'Count With Ace'))
+    fig = make_subplots(
+        rows=2, cols=2, 
+        horizontal_spacing=0.2, vertical_spacing=0.2,
+        subplot_titles=('No Ace', 'With Ace', 'Count No Ace', 'Count With Ace'))
     fig.add_trace(
         go.Heatmap(
             z=state_val_0.T,
-            colorscale='Jet',
+            colorscale=colorscale,
             x=[i for i in range(1, 11)],
             y=[j for j in range(12, 22)],
             hoverongaps=False,
             zmin=-1,
             zmax=1,
-            colorbar=dict(title="Val", x=0.42, y=0.8, len=0.4)  # Adjust x to position the color bar between subplots
+            colorbar=dict(title="Val", x=0.42, y=0.82, len=0.4)  # Adjust x to position the color bar between subplots
         ), row=1, col=1
     )
     fig.add_trace(
         go.Heatmap(
             z=state_val_1.T,
-            colorscale='Jet',
+            colorscale=colorscale,
             x=[i for i in range(1, 11)],
             y=[j for j in range(12, 22)],
             hoverongaps=False,
             zmin=-1,
             zmax=1,
-            colorbar=dict(title="Val", x=1.02, y=0.8, len=0.4)  # Adjust x to position the color bar between subplots
+            colorbar=dict(title="Val", x=1.02, y=0.82, len=0.4)  # Adjust x to position the color bar between subplots
         ), row=1, col=2
     )
     
     fig.add_trace(
         go.Heatmap(
             z=state_val_cnt_0.T,
-            colorscale='Jet',
+            colorscale=colorscale,
             x=[i for i in range(1, 11)],
             y=[j for j in range(12, 22)],
             hoverongaps=False,
+            zmin=0,
+            zmax=max_cnt,
             colorbar=dict(title="Cnt", x=0.42, y=0.2, len=0.4)  # Adjust x to position the color bar between subplots
         ), row=2, col=1
     )
     fig.add_trace(
         go.Heatmap(
             z=state_val_cnt_1.T,
-            colorscale='Jet',
+            colorscale=colorscale,
             x=[i for i in range(1, 11)],
             y=[j for j in range(12, 22)],
             hoverongaps=False,
+            zmin=0,
+            zmax=max_cnt,
             colorbar=dict(title="Cnt", x=1.02, y=0.2, len=0.4)  # Adjust x to position the color bar between subplots
         ), row=2, col=2
+    )
+    
+    xaxis_kwargs = dict(
+        title='x: Dealer showing', 
+        tickvals=np.arange(1, 11),
+        ticktext=[str(i) for i in range(1, 11)],
+        showgrid=False
+        # showgrid=True, gridwidth=1, gridcolor='grey', layer='above traces'
+    )
+    yaxis_kwargs = dict(
+        title='y: Player sum', 
+        tickvals=np.arange(12, 22),
+        ticktext=[str(i) for i in range(12, 22)],
+        showgrid=False
+        # showgrid=True, gridwidth=1, gridcolor='grey', layer='above traces'
     )
 
     fig.update_layout(
         title=f'State-Value Heatmaps {postfix}',
-        xaxis=dict(title='Dealer showing', showgrid=True, gridwidth=1, gridcolor='black'),
-        yaxis=dict(title='Player sum', showgrid=True, gridwidth=1, gridcolor='black'),
-        xaxis2=dict(title='Dealer showing', showgrid=True, gridwidth=1, gridcolor='black'),
-        yaxis2=dict(title='Player sum', showgrid=True, gridwidth=1, gridcolor='black'),
-        xaxis3=dict(title='Dealer showing', showgrid=True, gridwidth=1, gridcolor='black'),
-        yaxis3=dict(title='Player sum', showgrid=True, gridwidth=1, gridcolor='black'),
-        xaxis4=dict(title='Dealer showing', showgrid=True, gridwidth=1, gridcolor='black'),
-        yaxis4=dict(title='Player sum', showgrid=True, gridwidth=1, gridcolor='black'),
+        xaxis=xaxis_kwargs,
+        yaxis=yaxis_kwargs,
+        xaxis2=xaxis_kwargs,
+        yaxis2=yaxis_kwargs,
+        xaxis3=xaxis_kwargs,
+        yaxis3=yaxis_kwargs,
+        xaxis4=xaxis_kwargs,
+        yaxis4=yaxis_kwargs,
         autosize=False,
         width=1000,
         height=1000,
     )
+    
+    gl_x_vals = np.arange(0.5, 11, 1)
+    gl_y_vals = np.arange(11.5, 22, 1)
+    add_axex_gridline(fig, gl_x_vals, gl_y_vals, [(1, 1), (1, 2), (2, 1), (2, 2)])
 
     fig.show()
     
@@ -440,9 +573,9 @@ def plot_arr_bj_state_val_3d(state_val_arr, postfix):
     fig.update_layout(
         title=f'State-Value {postfix}', autosize=False,
         scene=dict(
-            xaxis_title='Dealer Showing',
-            yaxis_title='Player Sum',
-            zaxis=dict(range=(-1, 1), title='State Value')
+            xaxis_title='x: Dealer Showing',
+            yaxis_title='y: Player Sum',
+            zaxis=dict(range=(-1, 1), title='z: State Value')
         ),
         # scene=dict(
         #     xaxis=dict(
@@ -472,7 +605,7 @@ def plot_arr_bj_state_val_3d(state_val_arr, postfix):
     fig.show()
 
 
-# In[8]:
+# In[9]:
 
 
 ls_n_ep = [10_000, 500_000, 1_000_000]
@@ -480,26 +613,26 @@ ls_n_ep = [10_000, 500_000, 1_000_000]
 
 # ## Func 1
 
-# In[22]:
+# In[12]:
 
 
 get_ipython().run_cell_magic('time', '', 'ls_state_val_1 = []\nfor n_ep in ls_n_ep:\n    state_val_1 = Monte_Carlo_sim_blackjack_1(n_ep=n_ep)\n    ls_state_val_1.append(state_val_1)\n')
 
 
-# In[36]:
+# In[13]:
 
 
 for n_ep, state_val_1 in zip(ls_n_ep, ls_state_val_1):
     plot_arr_bj_state_val(state_val_1, f'(n_ep={n_ep})')
 
 
-# In[ ]:
+# In[14]:
 
 
 get_ipython().run_cell_magic('time', '', 'ls_state_val_1_paral = []\nfor n_ep in ls_n_ep:\n    state_val_1_paral = Monte_Carlo_sim_blackjack_1(n_ep=n_ep, n_jobs=N_JOBS, verbose=2)\n    ls_state_val_1_paral.append(state_val_1_paral)\n')
 
 
-# In[37]:
+# In[15]:
 
 
 for n_ep, state_val_1_paral in zip(ls_n_ep, ls_state_val_1_paral):
@@ -514,48 +647,69 @@ for n_ep, state_val_1_paral in zip(ls_n_ep, ls_state_val_1_paral):
 
 # ## Func 2
 
-# In[25]:
+# In[16]:
 
 
 get_ipython().run_cell_magic('time', '', 'ls_state_val_2 = []\nfor n_ep in ls_n_ep:\n    state_val_2 = Monte_Carlo_sim_blackjack_2(n_ep=n_ep)\n    ls_state_val_2.append(state_val_2)\n')
 
 
-# In[38]:
+# In[ ]:
 
 
 for n_ep, state_val_2 in zip(ls_n_ep, ls_state_val_2):
     plot_arr_bj_state_val(state_val_2, f'(n_ep={n_ep})')
 
 
-# In[27]:
+# In[ ]:
 
 
 get_ipython().run_cell_magic('time', '', 'ls_state_val_2_paral = []\nfor n_ep in ls_n_ep:\n    state_val_2_paral = Monte_Carlo_sim_blackjack_2(n_ep=n_ep, n_jobs=N_JOBS, verbose=2)\n    ls_state_val_2_paral.append(state_val_2_paral)\n')
 
 
-# In[39]:
+# In[ ]:
 
 
 for n_ep, state_val_2_paral in zip(ls_n_ep, ls_state_val_2_paral):
     plot_arr_bj_state_val(state_val_2_paral, f'(n_ep={n_ep})')
 
 
+# ## Case 0: dealer_thre=17, player_thre=20
+
+# In[ ]:
+
+
+get_ipython().run_cell_magic('time', '', 'state_val_c0 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=17, player_thre=20, n_jobs=N_JOBS, verbose=2)\n')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val_3d(state_val_c0[0].T, f'(n_ep=1_000_000), (dealer, player)=(20, 20), no ace)')
+plot_arr_bj_state_val_3d(state_val_c0[1].T, f'(n_ep=1_000_000), (dealer, player)=(20, 20), with ace)')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val(state_val_c0, f'(n_ep=1_000_000), (dealer, player)=(17, 20)')
+
+
 # ## Case 1: dealer_thre=20, player_thre=20
 
-# In[24]:
+# In[ ]:
 
 
-state_val_c1 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=20, player_thre=20, n_jobs=N_JOBS, verbose=2)
+get_ipython().run_cell_magic('time', '', 'state_val_c1 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=20, player_thre=20, n_jobs=N_JOBS, verbose=2)\n')
 
 
-# In[28]:
+# In[ ]:
 
 
 plot_arr_bj_state_val_3d(state_val_c1[0].T, f'(n_ep=1_000_000, (dealer, player)=(20, 20), no ace)')
 plot_arr_bj_state_val_3d(state_val_c1[1].T, f'(n_ep=1_000_000, (dealer, player)=(20, 20), with ace)')
 
 
-# In[14]:
+# In[ ]:
 
 
 plot_arr_bj_state_val(state_val_c1, f'(n_ep=1_000_000, dealer_thre=20, player_thre=20)')
@@ -563,20 +717,20 @@ plot_arr_bj_state_val(state_val_c1, f'(n_ep=1_000_000, dealer_thre=20, player_th
 
 # ## Case 2: dealer_thre=17, player_thre=17
 
-# In[29]:
+# In[ ]:
 
 
-state_val_c2 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=17, player_thre=17, n_jobs=N_JOBS, verbose=2)
+get_ipython().run_cell_magic('time', '', 'state_val_c2 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=17, player_thre=17, n_jobs=N_JOBS, verbose=2)\n')
 
 
-# In[30]:
+# In[ ]:
 
 
 plot_arr_bj_state_val_3d(state_val_c2[0].T, f'(n_ep=1_000_000, (dealer, player)=(17, 17), no ace)')
 plot_arr_bj_state_val_3d(state_val_c2[1].T, f'(n_ep=1_000_000, (dealer, player)=(17, 17), with ace)')
 
 
-# In[16]:
+# In[ ]:
 
 
 plot_arr_bj_state_val(state_val_c2, f'(n_ep=1_000_000, dealer_thre=17, player_thre=17)')
@@ -584,26 +738,347 @@ plot_arr_bj_state_val(state_val_c2, f'(n_ep=1_000_000, dealer_thre=17, player_th
 
 # ## Case 3: dealer_thre=20, player_thre=17
 
-# In[31]:
+# In[ ]:
 
 
-state_val_c3 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=20, player_thre=17, n_jobs=N_JOBS, verbose=2)
+get_ipython().run_cell_magic('time', '', 'state_val_c3 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=20, player_thre=17, n_jobs=N_JOBS, verbose=2)\n')
 
 
-# In[32]:
+# In[ ]:
 
 
 plot_arr_bj_state_val_3d(state_val_c3[0].T, f'(n_ep=1_000_000, (dealer, player)=(20, 17), no ace)')
 plot_arr_bj_state_val_3d(state_val_c3[1].T, f'(n_ep=1_000_000, (dealer, player)=(20, 17), with ace)')
 
 
-# In[33]:
+# In[ ]:
 
 
 plot_arr_bj_state_val(state_val_c3, f'(n_ep=1_000_000, dealer_thre=20, player_thre=17)')
 
 
-# # Example 5.2: Blackjack 
+# # Example 5.2: Blackjack optimal policy
+# - Using Monte Carlo ES (Exploring Starts)
+# - The optimal policy is a threshold policy. Meaning, if a player decides to stick at certain state, it will not hit when reaching state higher than the threshold. This is can be proved by the following.
+
+# In[ ]:
+
+
+FLOAT_TOL = 1e-8
+REL_ABS_DIFF_RD_HL_MUL = 5
+
+def Monte_Carlo_ES_blackjack_1(
+    n_ep, n_paral, dealer_thre=17, ini_player_thre=20, dealer_policy="fixed",
+    pol_impr=True, tol=1e-6, show_rdis=None, n_jobs=1, verbose=0
+):
+    assert dealer_thre<=21
+    assert ini_player_thre<=21
+    assert n_ep % n_paral == 0
+    assert n_paral >= n_jobs
+    
+    n_suit = 13
+    ndl, npl = 10, 10
+    d_s0, p_s0 = 1, 12
+    state_act_val_sum = np.zeros((ndl, npl, 2, 2))
+    state_act_val_cnt = np.ones((ndl, npl, 2, 2)) # So cnt is never 0 and can always be at the denominator
+    state_act_val = np.zeros((ndl, npl, 2, 2))
+    state_policy = np.zeros((ndl, npl, 2), dtype=int) # be careful about dtype here, if we need to use it as index, it needs to be int
+    for i in range(ndl): # Dealer showing
+        for j in range(npl): # Player sum
+            for k in range(0, 2): # Usable ace
+                # State
+                if j+p_s0<ini_player_thre:
+                    # Initial policy
+                    # Whenever the player sum is smaller than ini_player_thre, hit 
+                    state_policy[i, j, k] = 1
+    
+    def _ini_card_val(card):
+        return int(min(card, 10)+10*(card==1))
+    
+    def _card_val(card):
+        return int(min(card, 10))
+    
+    def _organize_state_val(state_act_val, state_act_val_cnt, state_policy):
+        state_val = np.max(state_act_val, axis=-1)
+        state_val_cnt = np.sum(state_act_val_cnt, axis=-1)
+        state_val_0 = state_val[:, :, 0]
+        state_val_1 = state_val[:, :, 1]
+        state_val_cnt_0 = state_val_cnt[:, :, 0]
+        state_val_cnt_1 = state_val_cnt[:, :, 1]
+        state_policy_0 = state_policy[:, :, 0]
+        state_policy_1 = state_policy[:, :, 1]
+        state_act_val_00 = state_act_val[:, :, 0, 0]
+        state_act_val_01 = state_act_val[:, :, 0, 1]
+        state_act_val_10 = state_act_val[:, :, 1, 0]
+        state_act_val_11 = state_act_val[:, :, 1, 1]
+        state_act_val_cnt_00 = state_act_val_cnt[:, :, 0, 0]
+        state_act_val_cnt_01 = state_act_val_cnt[:, :, 0, 1]
+        state_act_val_cnt_10 = state_act_val_cnt[:, :, 1, 0]
+        state_act_val_cnt_11 = state_act_val_cnt[:, :, 1, 1]
+        
+        return (
+            state_val_0, state_val_1, state_val_cnt_0, state_val_cnt_1, state_policy_0, state_policy_1,
+            (state_act_val_00, state_act_val_10, state_act_val_cnt_00, state_act_val_cnt_10),
+            (state_act_val_01, state_act_val_11, state_act_val_cnt_01, state_act_val_cnt_11)
+        )
+    
+    def _dealer_turn_fixed(dealer_show, final_player_sum):
+        assert final_player_sum<=21
+        dealer_sum = _ini_card_val(dealer_show)
+        had_ace = d_usable_ace = int(dealer_show == 1)
+        while 1:
+            new_card = np.random.randint(1, 1+n_suit)
+            if new_card == 1:
+                if had_ace: # if already had an ace or previously had an ace, but not usable now
+                    dealer_sum += 1
+                else:
+                    had_ace = d_usable_ace = 1
+                    dealer_sum += _ini_card_val(new_card)
+            else:
+                dealer_sum += _card_val(new_card)
+            if dealer_sum > 21:
+                if d_usable_ace:
+                    d_usable_ace = 0
+                    dealer_sum -= 10
+                else: # dealer busted
+                    reward = 1 # player reward
+                    break
+            elif dealer_sum>=dealer_thre:
+                reward = np.sign(final_player_sum-dealer_sum)
+                break
+        return reward
+    
+    def _dealer_turn_smart(dealer_show, final_player_sum):
+        assert final_player_sum<=21
+        dealer_sum = _ini_card_val(dealer_show)
+        had_ace = d_usable_ace = int(dealer_show == 1)
+        while 1:
+            new_card = np.random.randint(1, 1+n_suit)
+            if new_card == 1:
+                if had_ace: # if already had an ace or previously had an ace, but not usable now
+                    dealer_sum += 1
+                else:
+                    had_ace = d_usable_ace = 1
+                    dealer_sum += _ini_card_val(new_card)
+            else:
+                dealer_sum += _card_val(new_card)
+            if dealer_sum > 21:
+                if d_usable_ace:
+                    d_usable_ace = 0
+                    dealer_sum -= 10
+                else: # dealer busted
+                    reward = 1 # player reward
+                    break
+            elif dealer_sum > final_player_sum or dealer_sum==21 or dealer_sum>=dealer_thre:
+                reward = np.sign(final_player_sum-dealer_sum)
+                break
+        return reward
+    
+    def _one_episode():
+        ls_state_act = []
+        # initial state-act
+        cur_state_act = (
+            np.random.randint(ndl),
+            np.random.randint(npl),
+            np.random.randint(2),
+            np.random.randint(2), # Also need to randomly choose action, b/c we need some experience to evaluate a state-act pair.
+        )
+        ls_state_act.append(cur_state_act)
+        dealer_show = cur_state_act[0] + d_s0 # Convert from dealer state idx to actual dealer showing card
+        
+        busted = False
+        while cur_state_act[-1]: # As long as current act is to hit
+            new_card = np.random.randint(1, 1+n_suit)
+            player_sum = cur_state_act[1] + p_s0 + _card_val(new_card) # Convert from player state idx to actual player sum
+            if player_sum>21: 
+                if cur_state_act[2]:
+                    player_sum -= 10
+                    cur_state_act = [cur_state_act[0], player_sum-p_s0, 0] # Convert from actual player sum to player state idx
+                else: # player busted
+                    busted = True
+                    break
+            else:
+                cur_state_act = [cur_state_act[0], player_sum-p_s0, cur_state_act[2]]
+            policy_act = int(state_policy[tuple(cur_state_act)]) # Follow the current policy
+            cur_state_act.append(policy_act)
+            ls_state_act.append(tuple(cur_state_act))
+        
+        if busted:
+            reward = -1
+        else:
+            final_player_sum = cur_state_act[1] + p_s0
+            if dealer_policy == "fixed":
+                reward = _dealer_turn_fixed(dealer_show, final_player_sum)
+            else:
+                reward = _dealer_turn_smart(dealer_show, final_player_sum)
+        
+        state_act_val_sum = np.zeros((ndl, npl, 2, 2))
+        state_act_val_cnt = np.zeros((ndl, npl, 2, 2))
+        
+        for state_act in ls_state_act:
+            assert isinstance(state_act, tuple) and len(state_act)==4
+            state_act_val_sum[state_act] += reward
+            state_act_val_cnt[state_act] += 1
+        
+        return state_act_val_sum, state_act_val_cnt
+            
+    n_rd = n_ep // n_paral
+    
+    # def _get_state_act_val(i, j, k, a):
+    #     state_act_val = (
+    #         state_act_val_sum[i,j,k,a]/state_act_val_cnt[i,j,k,a] 
+    #         if state_act_val_cnt[i,j,k,a]>0
+    #         else 1 # Can actually choose any value. Choose 1 to promote exploring zero experience state-act
+    #     )
+    #     return state_act_val
+    
+    log_step = n_rd//20
+    rel_abs_diff_rd_hl = REL_ABS_DIFF_RD_HL_MUL*state_act_val.size/n_paral
+    lam = np.exp(-np.log(2)/rel_abs_diff_rd_hl)
+    # norm_state_act_val_abs_diff = np.ones((ndl, npl, 2, 2))/state_act_val.size
+    norm_state_act_val_act_similar = np.ones((ndl, npl, 2))/state_policy.size
+    
+    for rdi in range(n_rd):
+        if rdi%log_step==0:
+            logger.info("="*20+f"round: {rdi}")
+            
+        state_act_val_prev = state_act_val.copy()
+        state_act_val = state_act_val_sum/state_act_val_cnt
+        state_act_val_abs_diff = np.abs(state_act_val-state_act_val_prev) 
+        abs_state_act_val = np.abs(state_act_val)           
+        max_abs_diff, max_abs_val = np.max(state_act_val_abs_diff), np.max(abs_state_act_val)
+        if rdi>0:
+            if max_abs_diff<tol*max_abs_val:
+                logger.info(f"Converged at round with relative tol {tol:.1e} : {rdi}")
+                break
+            if pol_impr:
+                state_policy = np.argmax(state_act_val, axis=-1)
+            # Show the normalized relative absolute difference to see how state-val changes across state space
+            # n_norm_state_act_val_abs_diff = state_act_val_abs_diff/np.maximum(abs_state_act_val, (abs_state_act_val<FLOAT_TOL).astype(int))
+            # n_norm_state_act_val_abs_diff = n_norm_state_act_val_abs_diff/np.sum(n_norm_state_act_val_abs_diff)
+            # norm_state_act_val_abs_diff += (1-lam)*(n_norm_state_act_val_abs_diff-norm_state_act_val_abs_diff)
+            # Show the normalized relative similarity of action values for ech state.
+            abs_state_act_val_sum = np.sum(abs_state_act_val, axis=-1)
+            n_norm_state_act_val_act_similar = (
+                2/(1+(
+                    np.abs(np.diff(state_act_val, axis=-1).squeeze(axis=-1))/
+                    np.maximum(abs_state_act_val_sum, (abs_state_act_val_sum<FLOAT_TOL).astype(int))
+                ))-1
+            )
+            n_norm_state_act_val_act_similar /= np.sum(n_norm_state_act_val_act_similar)
+            norm_state_act_val_act_similar += (1-lam)*(n_norm_state_act_val_act_similar-norm_state_act_val_act_similar) 
+            
+        if show_rdis is not None and rdi in show_rdis:
+            logger.info("-"*20+f"round: {rdi}")
+            tmp_res = _organize_state_val(state_act_val, state_act_val_cnt, state_policy)
+            plot_state_policy([tmp_res[4], tmp_res[5]], f'{n_ep}, ({dealer_thre}, {ini_player_thre}), rdi={rdi}, {max_abs_diff:.2e}, {max_abs_diff/max_abs_val:.2e}')
+            if rdi>0:
+                # plot_val_over_state_space(
+                #     "Rel-Abs-Diff", 
+                #     [norm_state_act_val_abs_diff[:, :, 0, 0], norm_state_act_val_abs_diff[:, :, 1, 0]],
+                #     f'{n_ep}, ({dealer_thre}, {ini_player_thre}), rdi={rdi}, stick',
+                #     zlim=(0, 1)
+                # )
+                # plot_val_over_state_space(
+                #     "Rel-Abs-Diff", 
+                #     [norm_state_act_val_abs_diff[:, :, 0, 1], norm_state_act_val_abs_diff[:, :, 1, 1]],
+                #     f'{n_ep}, ({dealer_thre}, {ini_player_thre}), rdi={rdi}, hit',
+                #     zlim=(0, 1)
+                # )
+                plot_val_over_state_space(
+                    "Rel-Act-Simil", 
+                    [n_norm_state_act_val_act_similar[:, :, 0], n_norm_state_act_val_act_similar[:, :, 1]],
+                    f'{n_ep}, ({dealer_thre}, {ini_player_thre}), rdi={rdi}, stick v.s. hit',
+                    # zlim=(0, 1)
+                )
+            plot_arr_bj_state_val(tmp_res[:4], f'{n_ep}, ({dealer_thre}, {ini_player_thre})', max_cnt=int((n_ep//state_policy.size)*1.5))
+            
+        with parallel_backend('loky', n_jobs=n_jobs):
+            res = Parallel(verbose=verbose, pre_dispatch="1.5*n_jobs")(
+                delayed(_one_episode)() for _ in range(n_paral)
+            )
+        ls_new_val_sum, ls_new_val_cnt = zip(*res)
+        new_val_sum = sum(ls_new_val_sum)
+        new_val_cnt = sum(ls_new_val_cnt)
+        state_act_val_sum += new_val_sum
+        state_act_val_cnt += new_val_cnt
+            
+    state_act_val = state_act_val_sum/state_act_val_cnt
+    
+    return _organize_state_val(state_act_val, state_act_val_cnt, state_policy)
+
+
+# In[ ]:
+
+
+show_rdis = [0, 1000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000, 500_000, 1_000_000]
+
+
+# ## Dealer policy: "fixed"
+
+# In[ ]:
+
+
+get_ipython().run_cell_magic('time', '', '# 46 mins\nn_ep=4_000_000\nstate_act_res = Monte_Carlo_ES_blackjack_1(\n    n_ep=n_ep, n_paral=50, dealer_thre=17, ini_player_thre=20, \n    pol_impr=True, show_rdis=show_rdis, n_jobs=5, verbose=0\n)\n')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val_3d(state_act_res[0].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), no ace)')
+plot_arr_bj_state_val_3d(state_act_res[1].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), with ace)')
+
+
+# In[ ]:
+
+
+plot_state_policy([state_act_res[4], state_act_res[5]], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20))')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val(state_act_res[6], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), stick')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val(state_act_res[7], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), hit')
+
+
+# ## Dealer policy: "smart"
+
+# In[ ]:
+
+
+get_ipython().run_cell_magic('time', '', "# 49 mins\nn_ep=4_000_000\nstate_act_res = Monte_Carlo_ES_blackjack_1(\n    n_ep=n_ep, n_paral=50, dealer_thre=17, ini_player_thre=20, dealer_policy='smart',\n    pol_impr=True, show_rdis=show_rdis, n_jobs=5, verbose=0\n)\n")
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val_3d(state_act_res[0].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), no ace)')
+plot_arr_bj_state_val_3d(state_act_res[1].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), with ace)')
+
+
+# In[ ]:
+
+
+plot_state_policy([state_act_res[4], state_act_res[5]], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20))')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val(state_act_res[6], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), stick')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val(state_act_res[7], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), hit')
+
 
 # In[ ]:
 
@@ -614,29 +1089,18 @@ plot_arr_bj_state_val(state_val_c3, f'(n_ep=1_000_000, dealer_thre=20, player_th
 # In[ ]:
 
 
-
-
-
-# In[ ]:
-
-
-
+arr = np.arange(12).reshape(2,3,2)
+arr
 
 
 # In[ ]:
 
 
-
-
-
-# In[ ]:
-
-
-
+np.diff(arr, axis=-1).squeeze(axis=-1)
 
 
 # In[ ]:
 
 
-
+np.max(arr, axis=-1)
 
