@@ -20,7 +20,7 @@ get_ipython().system('jupyter notebook list')
 
 
 # Needs to paste `http://localhost:3110`, no ending `/`
-port = 2831
+port = 2912
 
 import IPython
 import json
@@ -613,26 +613,26 @@ ls_n_ep = [10_000, 500_000, 1_000_000]
 
 # ## Func 1
 
-# In[12]:
+# In[10]:
 
 
 get_ipython().run_cell_magic('time', '', 'ls_state_val_1 = []\nfor n_ep in ls_n_ep:\n    state_val_1 = Monte_Carlo_sim_blackjack_1(n_ep=n_ep)\n    ls_state_val_1.append(state_val_1)\n')
 
 
-# In[13]:
+# In[11]:
 
 
 for n_ep, state_val_1 in zip(ls_n_ep, ls_state_val_1):
     plot_arr_bj_state_val(state_val_1, f'(n_ep={n_ep})')
 
 
-# In[14]:
+# In[12]:
 
 
 get_ipython().run_cell_magic('time', '', 'ls_state_val_1_paral = []\nfor n_ep in ls_n_ep:\n    state_val_1_paral = Monte_Carlo_sim_blackjack_1(n_ep=n_ep, n_jobs=N_JOBS, verbose=2)\n    ls_state_val_1_paral.append(state_val_1_paral)\n')
 
 
-# In[15]:
+# In[13]:
 
 
 for n_ep, state_val_1_paral in zip(ls_n_ep, ls_state_val_1_paral):
@@ -647,26 +647,26 @@ for n_ep, state_val_1_paral in zip(ls_n_ep, ls_state_val_1_paral):
 
 # ## Func 2
 
-# In[16]:
+# In[14]:
 
 
 get_ipython().run_cell_magic('time', '', 'ls_state_val_2 = []\nfor n_ep in ls_n_ep:\n    state_val_2 = Monte_Carlo_sim_blackjack_2(n_ep=n_ep)\n    ls_state_val_2.append(state_val_2)\n')
 
 
-# In[ ]:
+# In[15]:
 
 
 for n_ep, state_val_2 in zip(ls_n_ep, ls_state_val_2):
     plot_arr_bj_state_val(state_val_2, f'(n_ep={n_ep})')
 
 
-# In[ ]:
+# In[16]:
 
 
 get_ipython().run_cell_magic('time', '', 'ls_state_val_2_paral = []\nfor n_ep in ls_n_ep:\n    state_val_2_paral = Monte_Carlo_sim_blackjack_2(n_ep=n_ep, n_jobs=N_JOBS, verbose=2)\n    ls_state_val_2_paral.append(state_val_2_paral)\n')
 
 
-# In[ ]:
+# In[17]:
 
 
 for n_ep, state_val_2_paral in zip(ls_n_ep, ls_state_val_2_paral):
@@ -675,20 +675,20 @@ for n_ep, state_val_2_paral in zip(ls_n_ep, ls_state_val_2_paral):
 
 # ## Case 0: dealer_thre=17, player_thre=20
 
-# In[ ]:
+# In[18]:
 
 
 get_ipython().run_cell_magic('time', '', 'state_val_c0 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=17, player_thre=20, n_jobs=N_JOBS, verbose=2)\n')
 
 
-# In[ ]:
+# In[19]:
 
 
 plot_arr_bj_state_val_3d(state_val_c0[0].T, f'(n_ep=1_000_000), (dealer, player)=(20, 20), no ace)')
 plot_arr_bj_state_val_3d(state_val_c0[1].T, f'(n_ep=1_000_000), (dealer, player)=(20, 20), with ace)')
 
 
-# In[ ]:
+# In[20]:
 
 
 plot_arr_bj_state_val(state_val_c0, f'(n_ep=1_000_000), (dealer, player)=(17, 20)')
@@ -696,20 +696,20 @@ plot_arr_bj_state_val(state_val_c0, f'(n_ep=1_000_000), (dealer, player)=(17, 20
 
 # ## Case 1: dealer_thre=20, player_thre=20
 
-# In[ ]:
+# In[21]:
 
 
 get_ipython().run_cell_magic('time', '', 'state_val_c1 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=20, player_thre=20, n_jobs=N_JOBS, verbose=2)\n')
 
 
-# In[ ]:
+# In[22]:
 
 
 plot_arr_bj_state_val_3d(state_val_c1[0].T, f'(n_ep=1_000_000, (dealer, player)=(20, 20), no ace)')
 plot_arr_bj_state_val_3d(state_val_c1[1].T, f'(n_ep=1_000_000, (dealer, player)=(20, 20), with ace)')
 
 
-# In[ ]:
+# In[23]:
 
 
 plot_arr_bj_state_val(state_val_c1, f'(n_ep=1_000_000, dealer_thre=20, player_thre=20)')
@@ -717,20 +717,20 @@ plot_arr_bj_state_val(state_val_c1, f'(n_ep=1_000_000, dealer_thre=20, player_th
 
 # ## Case 2: dealer_thre=17, player_thre=17
 
-# In[ ]:
+# In[24]:
 
 
 get_ipython().run_cell_magic('time', '', 'state_val_c2 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=17, player_thre=17, n_jobs=N_JOBS, verbose=2)\n')
 
 
-# In[ ]:
+# In[25]:
 
 
 plot_arr_bj_state_val_3d(state_val_c2[0].T, f'(n_ep=1_000_000, (dealer, player)=(17, 17), no ace)')
 plot_arr_bj_state_val_3d(state_val_c2[1].T, f'(n_ep=1_000_000, (dealer, player)=(17, 17), with ace)')
 
 
-# In[ ]:
+# In[26]:
 
 
 plot_arr_bj_state_val(state_val_c2, f'(n_ep=1_000_000, dealer_thre=17, player_thre=17)')
@@ -738,20 +738,20 @@ plot_arr_bj_state_val(state_val_c2, f'(n_ep=1_000_000, dealer_thre=17, player_th
 
 # ## Case 3: dealer_thre=20, player_thre=17
 
-# In[ ]:
+# In[27]:
 
 
 get_ipython().run_cell_magic('time', '', 'state_val_c3 = Monte_Carlo_sim_blackjack_2(n_ep=1_000_000, dealer_thre=20, player_thre=17, n_jobs=N_JOBS, verbose=2)\n')
 
 
-# In[ ]:
+# In[28]:
 
 
 plot_arr_bj_state_val_3d(state_val_c3[0].T, f'(n_ep=1_000_000, (dealer, player)=(20, 17), no ace)')
 plot_arr_bj_state_val_3d(state_val_c3[1].T, f'(n_ep=1_000_000, (dealer, player)=(20, 17), with ace)')
 
 
-# In[ ]:
+# In[29]:
 
 
 plot_arr_bj_state_val(state_val_c3, f'(n_ep=1_000_000, dealer_thre=20, player_thre=17)')
@@ -761,14 +761,15 @@ plot_arr_bj_state_val(state_val_c3, f'(n_ep=1_000_000, dealer_thre=20, player_th
 # - Using Monte Carlo ES (Exploring Starts)
 # - The optimal policy is a threshold policy. Meaning, if a player decides to stick at certain state, it will not hit when reaching state higher than the threshold. This is can be proved by the following.
 
-# In[ ]:
+# In[10]:
 
 
 FLOAT_TOL = 1e-8
 REL_ABS_DIFF_RD_HL_MUL = 5
+EPS_PROB = 0.05
 
 def Monte_Carlo_ES_blackjack_1(
-    n_ep, n_paral, dealer_thre=17, ini_player_thre=20, dealer_policy="fixed",
+    n_ep, n_paral, dealer_thre=17, ini_player_thre=20, dealer_policy="fixed", sampling_schema="uniform",
     pol_impr=True, tol=1e-6, show_rdis=None, n_jobs=1, verbose=0
 ):
     assert dealer_thre<=21
@@ -791,6 +792,22 @@ def Monte_Carlo_ES_blackjack_1(
                     # Initial policy
                     # Whenever the player sum is smaller than ini_player_thre, hit 
                     state_policy[i, j, k] = 1
+                    
+    n_rd = n_ep // n_paral
+    
+    # def _get_state_act_val(i, j, k, a):
+    #     state_act_val = (
+    #         state_act_val_sum[i,j,k,a]/state_act_val_cnt[i,j,k,a] 
+    #         if state_act_val_cnt[i,j,k,a]>0
+    #         else 1 # Can actually choose any value. Choose 1 to promote exploring zero experience state-act
+    #     )
+    #     return state_act_val
+    
+    log_step = n_rd//20
+    rel_abs_diff_rd_hl = REL_ABS_DIFF_RD_HL_MUL*state_act_val.size/n_paral
+    lam = np.exp(-np.log(2)/rel_abs_diff_rd_hl)
+    # norm_state_act_val_abs_diff = np.ones((ndl, npl, 2, 2))/state_act_val.size
+    norm_state_act_val_act_similar = np.ones((ndl, npl, 2))/state_policy.size
     
     def _ini_card_val(card):
         return int(min(card, 10)+10*(card==1))
@@ -877,12 +894,21 @@ def Monte_Carlo_ES_blackjack_1(
     def _one_episode():
         ls_state_act = []
         # initial state-act
-        cur_state_act = (
-            np.random.randint(ndl),
-            np.random.randint(npl),
-            np.random.randint(2),
-            np.random.randint(2), # Also need to randomly choose action, b/c we need some experience to evaluate a state-act pair.
-        )
+        if sampling_schema == "uniform":
+            cur_state_act = (
+                np.random.randint(ndl),
+                np.random.randint(npl),
+                np.random.randint(2),
+                np.random.randint(2), # Also need to randomly choose action, b/c we need some experience to evaluate a state-act pair.
+            )
+        else: # sampling state-act based on the similarity of action values at each state space
+            flat_idx = np.random.choice(state_policy.size, p=norm_state_act_val_act_similar.reshape(-1)*(1-EPS_PROB)+EPS_PROB/state_policy.size)
+            rnd_i = flat_idx // state_policy[0].size
+            flat_idx -= rnd_i*state_policy[0].size
+            rnd_j = flat_idx // state_policy[0, 0].size
+            flat_idx -= rnd_j*state_policy[0, 0].size
+            rnd_k = flat_idx
+            cur_state_act = (rnd_i, rnd_j, rnd_k, np.random.randint(2))
         ls_state_act.append(cur_state_act)
         dealer_show = cur_state_act[0] + d_s0 # Convert from dealer state idx to actual dealer showing card
         
@@ -921,22 +947,6 @@ def Monte_Carlo_ES_blackjack_1(
             state_act_val_cnt[state_act] += 1
         
         return state_act_val_sum, state_act_val_cnt
-            
-    n_rd = n_ep // n_paral
-    
-    # def _get_state_act_val(i, j, k, a):
-    #     state_act_val = (
-    #         state_act_val_sum[i,j,k,a]/state_act_val_cnt[i,j,k,a] 
-    #         if state_act_val_cnt[i,j,k,a]>0
-    #         else 1 # Can actually choose any value. Choose 1 to promote exploring zero experience state-act
-    #     )
-    #     return state_act_val
-    
-    log_step = n_rd//20
-    rel_abs_diff_rd_hl = REL_ABS_DIFF_RD_HL_MUL*state_act_val.size/n_paral
-    lam = np.exp(-np.log(2)/rel_abs_diff_rd_hl)
-    # norm_state_act_val_abs_diff = np.ones((ndl, npl, 2, 2))/state_act_val.size
-    norm_state_act_val_act_similar = np.ones((ndl, npl, 2))/state_policy.size
     
     for rdi in range(n_rd):
         if rdi%log_step==0:
@@ -967,6 +977,7 @@ def Monte_Carlo_ES_blackjack_1(
             )
             n_norm_state_act_val_act_similar /= np.sum(n_norm_state_act_val_act_similar)
             norm_state_act_val_act_similar += (1-lam)*(n_norm_state_act_val_act_similar-norm_state_act_val_act_similar) 
+            norm_state_act_val_act_similar /= np.sum(norm_state_act_val_act_similar)
             
         if show_rdis is not None and rdi in show_rdis:
             logger.info("-"*20+f"round: {rdi}")
@@ -991,7 +1002,11 @@ def Monte_Carlo_ES_blackjack_1(
                     f'{n_ep}, ({dealer_thre}, {ini_player_thre}), rdi={rdi}, stick v.s. hit',
                     # zlim=(0, 1)
                 )
-            plot_arr_bj_state_val(tmp_res[:4], f'{n_ep}, ({dealer_thre}, {ini_player_thre})', max_cnt=int((n_ep//state_policy.size)*1.5))
+            plot_arr_bj_state_val(
+                tmp_res[:4], 
+                f'{n_ep}, ({dealer_thre}, {ini_player_thre})', 
+                max_cnt=int((n_ep//state_policy.size)*(1.5 if sampling_schema=="uniform" else 10))
+            )
             
         with parallel_backend('loky', n_jobs=n_jobs):
             res = Parallel(verbose=verbose, pre_dispatch="1.5*n_jobs")(
@@ -1008,99 +1023,154 @@ def Monte_Carlo_ES_blackjack_1(
     return _organize_state_val(state_act_val, state_act_val_cnt, state_policy)
 
 
-# In[ ]:
+# In[11]:
 
 
 show_rdis = [0, 1000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000, 500_000, 1_000_000]
 
 
-# ## Dealer policy: "fixed"
+# ## Dealer policy: "fixed"; Sampling: "uniform" 
 
-# In[ ]:
+# In[32]:
 
 
 get_ipython().run_cell_magic('time', '', '# 46 mins\nn_ep=4_000_000\nstate_act_res = Monte_Carlo_ES_blackjack_1(\n    n_ep=n_ep, n_paral=50, dealer_thre=17, ini_player_thre=20, \n    pol_impr=True, show_rdis=show_rdis, n_jobs=5, verbose=0\n)\n')
 
 
-# In[ ]:
+# In[33]:
 
 
 plot_arr_bj_state_val_3d(state_act_res[0].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), no ace)')
 plot_arr_bj_state_val_3d(state_act_res[1].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), with ace)')
 
 
-# In[ ]:
+# In[34]:
 
 
 plot_state_policy([state_act_res[4], state_act_res[5]], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20))')
 
 
-# In[ ]:
+# In[35]:
 
 
 plot_arr_bj_state_val(state_act_res[6], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), stick')
 
 
-# In[ ]:
+# In[36]:
 
 
 plot_arr_bj_state_val(state_act_res[7], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), hit')
 
 
-# ## Dealer policy: "smart"
+# ## Dealer policy: "fixed"; Sampling: "similar" 
 
-# In[ ]:
+# In[12]:
+
+
+get_ipython().run_cell_magic('time', '', '# 46 mins\nn_ep=4_000_000\nstate_act_res = Monte_Carlo_ES_blackjack_1(\n    n_ep=n_ep, n_paral=50, dealer_thre=17, ini_player_thre=20, sampling_schema="similar",\n    pol_impr=True, show_rdis=show_rdis, n_jobs=5, verbose=0\n)\n')
+
+
+# In[13]:
+
+
+plot_arr_bj_state_val_3d(state_act_res[0].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), no ace, similar_spl)')
+plot_arr_bj_state_val_3d(state_act_res[1].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), with ace, similar_spl)')
+
+
+# In[14]:
+
+
+plot_state_policy([state_act_res[4], state_act_res[5]], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), similar_spl)')
+
+
+# In[15]:
+
+
+plot_arr_bj_state_val(state_act_res[6], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), stick, similar_spl')
+
+
+# In[16]:
+
+
+plot_arr_bj_state_val(state_act_res[7], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), hit, similar_spl')
+
+
+# ## Dealer policy: "smart"; Sampling: "uniform"
+
+# In[37]:
 
 
 get_ipython().run_cell_magic('time', '', "# 49 mins\nn_ep=4_000_000\nstate_act_res = Monte_Carlo_ES_blackjack_1(\n    n_ep=n_ep, n_paral=50, dealer_thre=17, ini_player_thre=20, dealer_policy='smart',\n    pol_impr=True, show_rdis=show_rdis, n_jobs=5, verbose=0\n)\n")
 
 
-# In[ ]:
+# In[38]:
 
 
 plot_arr_bj_state_val_3d(state_act_res[0].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), no ace)')
 plot_arr_bj_state_val_3d(state_act_res[1].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), with ace)')
 
 
-# In[ ]:
+# In[39]:
 
 
 plot_state_policy([state_act_res[4], state_act_res[5]], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20))')
 
 
-# In[ ]:
+# In[40]:
 
 
 plot_arr_bj_state_val(state_act_res[6], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), stick')
 
 
-# In[ ]:
+# In[41]:
 
 
 plot_arr_bj_state_val(state_act_res[7], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), hit')
 
 
+# ## Dealer policy: "smart"; Sampling: "similar"
+
+# In[17]:
+
+
+get_ipython().run_cell_magic('time', '', '# 46 mins\nn_ep=4_000_000\nstate_act_res = Monte_Carlo_ES_blackjack_1(\n    n_ep=n_ep, n_paral=50, dealer_thre=17, ini_player_thre=20, dealer_policy=\'smart\', sampling_schema="similar",\n    pol_impr=True, show_rdis=show_rdis, n_jobs=5, verbose=0\n)\n')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val_3d(state_act_res[0].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), no ace, similar_spl)')
+plot_arr_bj_state_val_3d(state_act_res[1].T, f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), with ace, similar_spl)')
+
+
+# In[ ]:
+
+
+plot_state_policy([state_act_res[4], state_act_res[5]], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20), similar_spl)')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val(state_act_res[6], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), stick, similar_spl')
+
+
+# In[ ]:
+
+
+plot_arr_bj_state_val(state_act_res[7], f'(n_ep={n_ep}, (dealer, player_ini)=(17, 20)), hit, similar_spl')
+
+
 # In[ ]:
 
 
 
 
 
-# In[ ]:
-
-
-arr = np.arange(12).reshape(2,3,2)
-arr
-
+# # End
 
 # In[ ]:
 
 
-np.diff(arr, axis=-1).squeeze(axis=-1)
 
-
-# In[ ]:
-
-
-np.max(arr, axis=-1)
 
